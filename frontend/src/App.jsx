@@ -30,7 +30,7 @@ function App() {
 
   // Get products from backend
   useEffect(() => {
-    fetch('/api/products')
+    fetch('https://ecommerce-efrt.onrender.com/products')
         .then((response) => {
           if (!response.ok) {
             throw new Error('Failed to fetch products')
@@ -52,7 +52,9 @@ function App() {
   // Get customer's cart
   const fetchCart = async () => {
     try {
-      const response = await fetch('/api/cart/customer/1')
+      const response = await fetch(
+          'https://ecommerce-efrt.onrender.com/cart/customer/1'
+      )
 
       if (!response.ok) {
         throw new Error('Failed to fetch cart')
@@ -68,17 +70,20 @@ function App() {
   // Add product to cart
   const handleAddToCart = async (productId) => {
     try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerId: 1,
-          productId: productId,
-          quantity: 1,
-        }),
-      })
+      const response = await fetch(
+          'https://ecommerce-efrt.onrender.com/cart',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              customerId: 1,
+              productId: productId,
+              quantity: 1,
+            }),
+          }
+      )
 
       if (!response.ok) {
         throw new Error('Failed to add product to cart')
@@ -102,17 +107,20 @@ function App() {
     }
 
     try {
-      const response = await fetch(`/api/cart/${cartItem.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerId: 1,
-          productId: cartItem.productId,
-          quantity: newQuantity,
-        }),
-      })
+      const response = await fetch(
+          `https://ecommerce-efrt.onrender.com/cart/${cartItem.id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              customerId: 1,
+              productId: cartItem.productId,
+              quantity: newQuantity,
+            }),
+          }
+      )
 
       if (!response.ok) {
         throw new Error('Failed to update cart')
@@ -128,9 +136,12 @@ function App() {
   // Remove item from cart
   const handleRemoveItem = async (cartId) => {
     try {
-      const response = await fetch(`/api/cart/${cartId}`, {
-        method: 'DELETE',
-      })
+      const response = await fetch(
+          `https://ecommerce-efrt.onrender.com/cart/${cartId}`,
+          {
+            method: 'DELETE',
+          }
+      )
 
       if (!response.ok) {
         throw new Error('Failed to remove item')
@@ -146,9 +157,12 @@ function App() {
   // Clear cart
   const handleClearCart = async () => {
     try {
-      const response = await fetch('/api/cart/clear/1', {
-        method: 'DELETE',
-      })
+      const response = await fetch(
+          'https://ecommerce-efrt.onrender.com/cart/clear/1',
+          {
+            method: 'DELETE',
+          }
+      )
 
       if (!response.ok) {
         throw new Error('Failed to clear cart')
@@ -169,15 +183,18 @@ function App() {
     }
 
     try {
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerId: 1,
-        }),
-      })
+      const response = await fetch(
+          'https://ecommerce-efrt.onrender.com/orders',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              customerId: 1,
+            }),
+          }
+      )
 
       if (!response.ok) {
         throw new Error('Failed to place order')
@@ -185,16 +202,19 @@ function App() {
 
       const data = await response.json()
 
-      const paymentResponse = await fetch('/api/payments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId: data.id,
-          paymentMethod: 'UPI',
-        }),
-      })
+      const paymentResponse = await fetch(
+          'https://ecommerce-efrt.onrender.com/payments',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderId: data.id,
+              paymentMethod: 'UPI',
+            }),
+          }
+      )
 
       if (!paymentResponse.ok) {
         throw new Error('Payment failed')
@@ -210,9 +230,12 @@ function App() {
           `Payment Status: ${payment.paymentStatus}`
       )
 
-      const clearResponse = await fetch('/api/cart/clear/1', {
-        method: 'DELETE',
-      })
+      const clearResponse = await fetch(
+          'https://ecommerce-efrt.onrender.com/cart/clear/1',
+          {
+            method: 'DELETE',
+          }
+      )
 
       if (!clearResponse.ok) {
         throw new Error(
@@ -232,16 +255,19 @@ function App() {
     event.preventDefault()
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      })
+      const response = await fetch(
+          'https://ecommerce-efrt.onrender.com/auth/login',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: email,
+              password: password,
+            }),
+          }
+      )
 
       if (!response.ok) {
         throw new Error('Invalid email or password')
@@ -265,24 +291,27 @@ function App() {
     event.preventDefault()
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: registerData.name,
-          email: registerData.email,
-          password: registerData.password,
-          phone: registerData.phone,
-          gender: registerData.gender,
-          address: registerData.address,
-          role: 'CUSTOMER',
-          city: registerData.city,
-          state: registerData.state,
-          pincode: registerData.pincode,
-        }),
-      })
+      const response = await fetch(
+          'https://ecommerce-efrt.onrender.com/auth/register',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: registerData.name,
+              email: registerData.email,
+              password: registerData.password,
+              phone: registerData.phone,
+              gender: registerData.gender,
+              address: registerData.address,
+              role: 'CUSTOMER',
+              city: registerData.city,
+              state: registerData.state,
+              pincode: registerData.pincode,
+            }),
+          }
+      )
 
       if (!response.ok) {
         throw new Error('Registration failed')
