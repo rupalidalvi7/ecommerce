@@ -1,398 +1,347 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-import mockProductData from './mockData'
+import { useEffect, useState } from "react";
+import "./App.css";
+import mockProductData from "./mockData";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 function App() {
-    const [products, setProducts] = useState([])
-    const [cart, setCart] = useState([])
-    const [showCart, setShowCart] = useState(false)
+    const [products, setProducts] = useState([]);
+    const [cart, setCart] = useState([]);
+    const [customerId, setCustomerId] = useState(1);
 
-    const [showLogin, setShowLogin] = useState(false)
-    const [showRegister, setShowRegister] = useState(false)
+    const [showLogin, setShowLogin] = useState(false);
+    const [showRegister, setShowRegister] = useState(false);
+    const [showCart, setShowCart] = useState(false);
 
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const [loginData, setLoginData] = useState({
+        email: "",
+        password: "",
+    });
 
     const [registerData, setRegisterData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        phone: '',
-        gender: '',
-        address: '',
-        city: '',
-        state: '',
-        pincode: '',
-    })
+        name: "",
+        email: "",
+        password: "",
+        phone: "",
+        gender: "Female",
+        address: "",
+        role: "CUSTOMER",
+        city: "",
+        state: "",
+        pincode: "",
+    });
 
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const [message, setMessage] = useState("");
 
-    // Get products
-    useEffect(() => {
-        fetch(`${API_BASE_URL}/products`)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch products')
-                }
-
-                return response.json()
-            })
-            .then((data) => {
-                setProducts(data)
-                setLoading(false)
-            })
-            .catch((error) => {
-                console.error(error)
-                setError('Unable to load products')
-                setLoading(false)
-            })
-    }, [])
-
-    // Get customer's cart
-    const fetchCart = async () => {
+    // Load products
+    const loadProducts = async () => {
         try {
-            const response = await fetch(
-                `${API_BASE_URL}/cart/customer/1`
-            )
+            const response = await fetch(`${API_BASE_URL}/products`);
 
             if (!response.ok) {
-                throw new Error('Failed to fetch cart')
+                throw new Error("Unable to load products");
             }
 
-            const data = await response.json()
-            setCart(data)
+            const data = await response.json();
+            setProducts(data);
         } catch (error) {
-            console.error(error)
+            console.error(error);
+            setMessage("Unable to load products");
         }
-    }
+    };
+
+    // Load customer cart
+    const loadCart = async () => {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/cart/customer/${customerId}`
+            );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            setCart(data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    useEffect(() => {
+        loadProducts();
+        loadCart();
+    }, [customerId]);
 
     // Add product to cart
-    const handleAddToCart = async (productId) => {
+    const addToCart = async (product) => {
         try {
             const response = await fetch(`${API_BASE_URL}/cart`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    customerId: 1,
-                    productId: productId,
+                    customerId: customerId,
+                    productId: product.id,
                     quantity: 1,
                 }),
-            })
+            });
 
             if (!response.ok) {
-                throw new Error('Failed to add product to cart')
+                throw new Error("Unable to add product to cart");
             }
 
-            const data = await response.json()
-
-            alert(`${data.productName} added to cart!`)
-
-            await fetchCart()
+            await loadCart();
+            setMessage(`${product.productName} added to cart`);
         } catch (error) {
-            console.error(error)
-            alert('Unable to add product to cart')
+            console.error(error);
+            setMessage("Unable to add product to cart");
         }
-    }
-
-    // Update cart quantity
-    const handleUpdateQuantity = async (cartItem, newQuantity) => {
-        if (newQuantity < 1) {
-            return
-        }
-
-        try {
-            const response = await fetch(
-                `${API_BASE_URL}/cart/${cartItem.id}`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        customerId: 1,
-                        productId: cartItem.productId,
-                        quantity: newQuantity,
-                    }),
-                }
-            )
-
-            if (!response.ok) {
-                throw new Error('Failed to update cart')
-            }
-
-            await fetchCart()
-        } catch (error) {
-            console.error(error)
-            alert('Unable to update quantity')
-        }
-    }
-
-    // Remove item from cart
-    const handleRemoveItem = async (cartId) => {
-        try {
-            const response = await fetch(
-                `${API_BASE_URL}/cart/${cartId}`,
-                {
-                    method: 'DELETE',
-                }
-            )
-
-            if (!response.ok) {
-                throw new Error('Failed to remove item')
-            }
-
-            await fetchCart()
-        } catch (error) {
-            console.error(error)
-            alert('Unable to remove item')
-        }
-    }
+    };
 
     // Login
     const handleLogin = async (event) => {
-        event.preventDefault()
+        event.preventDefault();
 
         try {
-            const response = await fetch(
-                `${API_BASE_URL}/auth/login`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                    }),
-                }
-            )
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(loginData),
+            });
 
-            const data = await response.json()
+            const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'Login failed')
+                throw new Error(data.message || "Login failed");
             }
 
-            alert(data.message || 'Login successful!')
+            if (data.id) {
+                setCustomerId(data.id);
+            }
 
-            setEmail('')
-            setPassword('')
-            setShowLogin(false)
-
-            await fetchCart()
+            setShowLogin(false);
+            setMessage(data.message || "Login successful");
+            await loadCart();
         } catch (error) {
-            console.error(error)
-            alert(error.message)
+            console.error(error);
+            setMessage(error.message || "Login failed");
         }
-    }
+    };
 
     // Register
     const handleRegister = async (event) => {
-        event.preventDefault()
+        event.preventDefault();
 
         try {
-            const response = await fetch(
-                `${API_BASE_URL}/auth/register`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: registerData.name,
-                        email: registerData.email,
-                        password: registerData.password,
-                        phone: registerData.phone,
-                        gender: registerData.gender,
-                        address: registerData.address,
-                        city: registerData.city,
-                        state: registerData.state,
-                        pincode: registerData.pincode,
-                        role: 'CUSTOMER',
-                    }),
-                }
-            )
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(registerData),
+            });
 
-            const data = await response.json()
+            const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || 'Registration failed')
+                throw new Error(data.message || "Registration failed");
             }
 
-            alert(data.message || 'Registration successful!')
+            if (data.id) {
+                setCustomerId(data.id);
+            }
+
+            setShowRegister(false);
+            setMessage("Registration successful. You can now login.");
 
             setRegisterData({
-                name: '',
-                email: '',
-                password: '',
-                phone: '',
-                gender: '',
-                address: '',
-                city: '',
-                state: '',
-                pincode: '',
-            })
-
-            setShowRegister(false)
+                name: "",
+                email: "",
+                password: "",
+                phone: "",
+                gender: "Female",
+                address: "",
+                role: "CUSTOMER",
+                city: "",
+                state: "",
+                pincode: "",
+            });
         } catch (error) {
-            console.error(error)
-            alert(error.message)
+            console.error(error);
+            setMessage(error.message || "Registration failed");
         }
-    }
+    };
 
-    // Open cart
-    const handleCartClick = () => {
-        setShowCart(true)
-        setShowLogin(false)
-        setShowRegister(false)
-        fetchCart()
-    }
-
-    // Place order and payment
-    const handlePlaceOrder = async () => {
+    // Place order
+    const placeOrder = async () => {
         try {
             if (cart.length === 0) {
-                alert('Your cart is empty')
-                return
+                setMessage("Your cart is empty");
+                return;
             }
 
-            const orderResponse = await fetch(
-                `${API_BASE_URL}/orders`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        customerId: 1,
-                    }),
-                }
-            )
-
-            const orderData = await orderResponse.json()
+            const orderResponse = await fetch(`${API_BASE_URL}/orders`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    customerId: customerId,
+                }),
+            });
 
             if (!orderResponse.ok) {
-                throw new Error(
-                    orderData.message || 'Failed to place order'
-                )
+                throw new Error("Unable to place order");
             }
 
-            const paymentResponse = await fetch(
-                `${API_BASE_URL}/payments`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        orderId: orderData.id,
-                        paymentMethod: 'UPI',
-                    }),
-                }
-            )
+            const orderData = await orderResponse.json();
 
-            const paymentData = await paymentResponse.json()
+            // Payment
+            const paymentResponse = await fetch(`${API_BASE_URL}/payments`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    orderId: orderData.id,
+                    paymentMethod: "UPI",
+                }),
+            });
 
             if (!paymentResponse.ok) {
-                throw new Error(
-                    paymentData.message || 'Payment failed'
-                )
+                throw new Error("Payment failed");
             }
 
-            await fetch(
-                `${API_BASE_URL}/cart/clear/1`,
-                {
-                    method: 'DELETE',
-                }
-            )
+            // Clear backend cart
+            await fetch(`${API_BASE_URL}/cart/clear/${customerId}`, {
+                method: "DELETE",
+            });
 
-            setCart([])
-            setShowCart(false)
-
-            alert(
-                `Order placed successfully!\nOrder ID: ${orderData.id}\nPayment Status: ${paymentData.paymentStatus}`
-            )
+            setCart([]);
+            setShowCart(false);
+            setMessage("Order placed and payment successful!");
         } catch (error) {
-            console.error(error)
-            alert(error.message)
+            console.error(error);
+            setMessage(error.message || "Unable to place order");
         }
-    }
-
-    // Cart count
-    const cartCount = cart.reduce(
-        (total, item) => total + item.quantity,
-        0
-    )
-
-    // Cart total
-    const cartTotal = cart.reduce(
-        (total, item) => total + Number(item.totalPrice),
-        0
-    )
+    };
 
     return (
         <div className="app">
 
-            {/* Navbar */}
-            <nav className="navbar">
-                <h2 className="logo">E-Commerce</h2>
+            {/* Header */}
+            <header className="header">
+                <h2>E-Commerce</h2>
 
-                <div className="nav-links">
-                    <a href="/">Home</a>
-
-                    <a href="#products">Products</a>
-
-                    <button
-                        className="nav-cart"
-                        onClick={handleCartClick}
-                    >
-                        Cart ({cartCount})
+                <nav>
+                    <button onClick={() => setShowLogin(true)}>Login</button>
+                    <button onClick={() => setShowRegister(true)}>Register</button>
+                    <button onClick={() => setShowCart(true)}>
+                        Cart ({cart.length})
                     </button>
+                </nav>
+            </header>
 
-                    <button
-                        className="login-button"
-                        onClick={() => {
-                            setShowLogin(true)
-                            setShowRegister(false)
-                            setShowCart(false)
-                        }}
-                    >
-                        Login
-                    </button>
+            {/* Hero Section */}
+            <section className="hero">
+                <p>WELCOME TO OUR STORE</p>
 
-                    <button
-                        className="register-button"
-                        onClick={() => {
-                            setShowRegister(true)
-                            setShowLogin(false)
-                            setShowCart(false)
-                        }}
-                    >
-                        Register
-                    </button>
+                <h1>
+                    Shop Smart.
+                    <br />
+                    Shop Easy.
+                </h1>
+
+                <span>
+          Discover quality products and enjoy a simple and convenient
+          shopping experience.
+        </span>
+
+                <button
+                    className="shop-button"
+                    onClick={() =>
+                        document
+                            .getElementById("products")
+                            ?.scrollIntoView({ behavior: "smooth" })
+                    }
+                >
+                    Shop Now
+                </button>
+            </section>
+
+            {/* Message */}
+            {message && (
+                <div className="message">
+                    {message}
                 </div>
-            </nav>
+            )}
 
-            {/* Login */}
+            {/* Products */}
+            <section id="products" className="products-section">
+                <h2>Featured Products</h2>
+
+                {products.length === 0 ? (
+                    <p>No products available.</p>
+                ) : (
+                    <div className="product-grid">
+                        {products.map((product) => {
+                            const image =
+                                mockProductData[product.productName]?.image;
+
+                            return (
+                                <div className="product-card" key={product.id}>
+
+                                    <img
+                                        src={image}
+                                        alt={product.productName}
+                                        className="product-image"
+                                    />
+
+                                    <h3>{product.productName}</h3>
+
+                                    <h4>₹{product.price}</h4>
+
+                                    <p>{product.brand}</p>
+
+                                    <button
+                                        className="add-cart-button"
+                                        onClick={() => addToCart(product)}
+                                    >
+                                        Add to Cart
+                                    </button>
+
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
+
+            {/* Footer */}
+            <footer>
+                © 2026 E-Commerce. All Rights Reserved.
+            </footer>
+
+            {/* Login Modal */}
             {showLogin && (
-                <section className="login-section">
-                    <div className="login-box">
-
+                <div className="modal-overlay">
+                    <div className="modal">
                         <h2>Login</h2>
 
                         <form onSubmit={handleLogin}>
-
                             <input
                                 type="email"
                                 placeholder="Email"
-                                value={email}
-                                onChange={(event) =>
-                                    setEmail(event.target.value)
+                                value={loginData.email}
+                                onChange={(e) =>
+                                    setLoginData({
+                                        ...loginData,
+                                        email: e.target.value,
+                                    })
                                 }
                                 required
                             />
@@ -400,47 +349,42 @@ function App() {
                             <input
                                 type="password"
                                 placeholder="Password"
-                                value={password}
-                                onChange={(event) =>
-                                    setPassword(event.target.value)
+                                value={loginData.password}
+                                onChange={(e) =>
+                                    setLoginData({
+                                        ...loginData,
+                                        password: e.target.value,
+                                    })
                                 }
                                 required
                             />
 
-                            <button type="submit">
-                                Login
+                            <button type="submit">Login</button>
+                            <button
+                                type="button"
+                                onClick={() => setShowLogin(false)}
+                            >
+                                Cancel
                             </button>
-
                         </form>
-
-                        <button
-                            className="close-login-button"
-                            onClick={() => setShowLogin(false)}
-                        >
-                            Cancel
-                        </button>
-
                     </div>
-                </section>
+                </div>
             )}
 
-            {/* Register */}
+            {/* Register Modal */}
             {showRegister && (
-                <section className="register-section">
-                    <div className="register-box">
-
+                <div className="modal-overlay">
+                    <div className="modal">
                         <h2>Register</h2>
 
                         <form onSubmit={handleRegister}>
-
                             <input
-                                type="text"
                                 placeholder="Name"
                                 value={registerData.name}
-                                onChange={(event) =>
+                                onChange={(e) =>
                                     setRegisterData({
                                         ...registerData,
-                                        name: event.target.value,
+                                        name: e.target.value,
                                     })
                                 }
                                 required
@@ -450,10 +394,10 @@ function App() {
                                 type="email"
                                 placeholder="Email"
                                 value={registerData.email}
-                                onChange={(event) =>
+                                onChange={(e) =>
                                     setRegisterData({
                                         ...registerData,
-                                        email: event.target.value,
+                                        email: e.target.value,
                                     })
                                 }
                                 required
@@ -463,115 +407,92 @@ function App() {
                                 type="password"
                                 placeholder="Password"
                                 value={registerData.password}
-                                onChange={(event) =>
+                                onChange={(e) =>
                                     setRegisterData({
                                         ...registerData,
-                                        password: event.target.value,
+                                        password: e.target.value,
                                     })
                                 }
                                 required
                             />
 
                             <input
-                                type="tel"
                                 placeholder="Phone"
                                 value={registerData.phone}
-                                onChange={(event) =>
+                                onChange={(e) =>
                                     setRegisterData({
                                         ...registerData,
-                                        phone: event.target.value,
+                                        phone: e.target.value,
                                     })
                                 }
                                 required
                             />
 
                             <input
-                                type="text"
-                                placeholder="Gender"
-                                value={registerData.gender}
-                                onChange={(event) =>
-                                    setRegisterData({
-                                        ...registerData,
-                                        gender: event.target.value,
-                                    })
-                                }
-                                required
-                            />
-
-                            <input
-                                type="text"
                                 placeholder="Address"
                                 value={registerData.address}
-                                onChange={(event) =>
+                                onChange={(e) =>
                                     setRegisterData({
                                         ...registerData,
-                                        address: event.target.value,
+                                        address: e.target.value,
                                     })
                                 }
                                 required
                             />
 
                             <input
-                                type="text"
                                 placeholder="City"
                                 value={registerData.city}
-                                onChange={(event) =>
+                                onChange={(e) =>
                                     setRegisterData({
                                         ...registerData,
-                                        city: event.target.value,
+                                        city: e.target.value,
                                     })
                                 }
                                 required
                             />
 
                             <input
-                                type="text"
                                 placeholder="State"
                                 value={registerData.state}
-                                onChange={(event) =>
+                                onChange={(e) =>
                                     setRegisterData({
                                         ...registerData,
-                                        state: event.target.value,
+                                        state: e.target.value,
                                     })
                                 }
                                 required
                             />
 
                             <input
-                                type="text"
                                 placeholder="Pincode"
                                 value={registerData.pincode}
-                                onChange={(event) =>
+                                onChange={(e) =>
                                     setRegisterData({
                                         ...registerData,
-                                        pincode: event.target.value,
+                                        pincode: e.target.value,
                                     })
                                 }
                                 required
                             />
 
-                            <button type="submit">
-                                Register
+                            <button type="submit">Register</button>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowRegister(false)}
+                            >
+                                Cancel
                             </button>
-
                         </form>
-
-                        <button
-                            className="close-register-button"
-                            onClick={() => setShowRegister(false)}
-                        >
-                            Cancel
-                        </button>
-
                     </div>
-                </section>
+                </div>
             )}
 
-            {/* Cart */}
+            {/* Cart Modal */}
             {showCart && (
-                <section className="cart-section">
-
-                    <div className="cart-box">
+                <div className="modal-overlay">
+                    <div className="modal cart-modal">
 
                         <h2>Your Cart</h2>
 
@@ -580,209 +501,33 @@ function App() {
                         ) : (
                             <>
                                 {cart.map((item) => (
-                                    <div
-                                        className="cart-item"
-                                        key={item.id}
-                                    >
-
-                                        <div>
-                                            <h3>{item.productName}</h3>
-
-                                            <p>
-                                                ₹{item.price}
-                                            </p>
-                                        </div>
-
-                                        <div className="quantity-controls">
-
-                                            <button
-                                                onClick={() =>
-                                                    handleUpdateQuantity(
-                                                        item,
-                                                        item.quantity - 1
-                                                    )
-                                                }
-                                            >
-                                                -
-                                            </button>
-
-                                            <span>
-                        {item.quantity}
-                      </span>
-
-                                            <button
-                                                onClick={() =>
-                                                    handleUpdateQuantity(
-                                                        item,
-                                                        item.quantity + 1
-                                                    )
-                                                }
-                                            >
-                                                +
-                                            </button>
-
-                                        </div>
-
-                                        <p>
-                                            ₹{item.totalPrice}
-                                        </p>
-
-                                        <button
-                                            onClick={() =>
-                                                handleRemoveItem(item.id)
-                                            }
-                                        >
-                                            Remove
-                                        </button>
-
+                                    <div className="cart-item" key={item.id}>
+                                        <strong>{item.productName}</strong>
+                                        <span>
+                      Quantity: {item.quantity}
+                    </span>
+                                        <span>
+                      ₹{item.totalPrice}
+                    </span>
                                     </div>
                                 ))}
 
-                                <h3>
-                                    Total: ₹{cartTotal}
-                                </h3>
-
-                                <button
-                                    className="place-order-button"
-                                    onClick={handlePlaceOrder}
-                                >
-                                    Place Order
+                                <button onClick={placeOrder}>
+                                    Place Order & Pay
                                 </button>
                             </>
                         )}
 
-                        <button
-                            onClick={() => setShowCart(false)}
-                        >
-                            Continue Shopping
+                        <button onClick={() => setShowCart(false)}>
+                            Close
                         </button>
 
                     </div>
-
-                </section>
+                </div>
             )}
 
-            {/* Home and Products */}
-            {!showCart &&
-                !showLogin &&
-                !showRegister && (
-                    <>
-                        <section className="hero-section">
-
-                            <div className="hero-content">
-
-                                <p className="welcome">
-                                    WELCOME TO OUR STORE
-                                </p>
-
-                                <h1>
-                                    Shop Smart.
-                                    <br />
-                                    Shop Easy.
-                                </h1>
-
-                                <p className="hero-text">
-                                    Discover quality products and enjoy
-                                    a simple and convenient shopping
-                                    experience.
-                                </p>
-
-                                <button
-                                    className="shop-button"
-                                    onClick={() =>
-                                        document
-                                            .getElementById('products')
-                                            ?.scrollIntoView({
-                                                behavior: 'smooth',
-                                            })
-                                    }
-                                >
-                                    Shop Now
-                                </button>
-
-                            </div>
-
-                        </section>
-
-                        {/* Products */}
-                        <section
-                            className="products-section"
-                            id="products"
-                        >
-
-                            <h2>Featured Products</h2>
-
-                            {loading && (
-                                <p>Loading products...</p>
-                            )}
-
-                            {error && (
-                                <p>{error}</p>
-                            )}
-
-                            {!loading && !error && (
-                                <div className="product-grid">
-
-                                    {products.map((product) => (
-
-                                        <div
-                                            className="product-card"
-                                            key={product.id}
-                                        >
-
-                                            <div className="product-image">
-
-                                                <img
-                                                    src={
-                                                        mockProductData[
-                                                            product.id
-                                                            ]?.image
-                                                    }
-                                                    alt={product.productName}
-                                                />
-
-                                            </div>
-
-                                            <h3>
-                                                {product.productName}
-                                            </h3>
-
-                                            <p>
-                                                ₹{product.price}
-                                            </p>
-
-                                            <small>
-                                                {product.brand}
-                                            </small>
-
-                                            <button
-                                                onClick={() =>
-                                                    handleAddToCart(
-                                                        product.id
-                                                    )
-                                                }
-                                            >
-                                                Add to Cart
-                                            </button>
-
-                                        </div>
-
-                                    ))}
-
-                                </div>
-                            )}
-
-                        </section>
-                    </>
-                )}
-
-            {/* Footer */}
-            <footer className="footer">
-                © 2026 E-Commerce. All Rights Reserved.
-            </footer>
-
         </div>
-    )
+    );
 }
 
-export default App
+export default App;
